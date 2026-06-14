@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 const { initSocket } = require('./config/socket');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
+const apiRoutes = require('./routes/apiRoutes');
 const boardRoutes = require('./routes/boardRoutes');
 const columnRoutes = require('./routes/columnRoutes');
 const taskRoutes = require('./routes/taskRoutes');
@@ -23,9 +24,23 @@ const app = express();
 
 // ----- Global Middleware -----
 
+// Build the list of allowed origins from the CLIENT_URL env var.
+// CLIENT_URL may be a single URL or a comma-separated list of URLs,
+// which is useful when the frontend is deployed on Railway with a
+// generated domain alongside a custom domain.
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. curl, Postman, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${origin}' is not allowed`));
+    },
     credentials: true,
   })
 );
@@ -43,6 +58,10 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+
+// Convenience aliases: /api/login, /api/register, /api/me, /api/logout
+// These mirror the /api/auth/* routes for frontend backward compatibility.
+app.use('/api', apiRoutes);
 
 // Phase 2: Boards (CRUD + member management)
 app.use('/api/boards', boardRoutes);
