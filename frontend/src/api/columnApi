@@ -1,0 +1,7 @@
+import axiosInstance from './axios';
+
+export const getColumnsByBoard  = (boardId)       => axiosInstance.get(`/columns/board/${boardId}`);
+export const createColumn       = (data)           => axiosInstance.post('/columns', data);
+export const updateColumn       = (id, data)       => axiosInstance.patch(`/columns/${id}`, data);
+export const deleteColumn       = (id)             => axiosInstance.delete(`/columns/${id}`);
+export const reorderColumns     = (boardId, order) => axiosInstance.patch(`/columns/reorder`, { boardId, order });
